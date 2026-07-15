@@ -1,0 +1,10 @@
+spring:
+  jpa:
+    show-sql: false
+
+logging:
+  level:
+    root: WARN
+    com.freightnexus: INFO
+  pattern:
+    console: '{"time":"%d{ISO8601}","level":"%level","logger":"%logger{36}","msg":"%msg"}%n'

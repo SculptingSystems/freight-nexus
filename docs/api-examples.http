@@ -1,0 +1,137 @@
+﻿# Freight Nexus API â€” Executable Examples
+# Run in IntelliJ IDEA HTTP Client or VS Code REST Client extension.
+# Execute top to bottom â€” each step uses results from the previous.
+
+### â”€â”€â”€ CARRIER ONBOARDING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+### 1. Register carrier
+POST http://localhost:8080/partners
+Content-Type: application/json
+
+{"name":"FastFreight Co","email":"ops@fastfreight.com","type":"CARRIER","password":"s3cur3"}
+
+### 2. Carrier login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{"email":"ops@fastfreight.com","password":"s3cur3"}
+
+@carrierToken = paste_token_here
+
+### 3. Register a truck
+POST http://localhost:8080/vehicles
+Authorization: Bearer {{carrierToken}}
+Content-Type: application/json
+
+{"plateNumber":"MH-01-AB-1234","type":"BOX_TRUCK","weightCapacityKg":5000,"volumeCapacityM3":20}
+
+### 4. Register a driver
+POST http://localhost:8080/drivers
+Authorization: Bearer {{carrierToken}}
+Content-Type: application/json
+
+{"name":"Raj Kumar","email":"raj@fastfreight.com","password":"dpass","licenseNumber":"MH-DL-99999","licenseExpiry":"2028-01-01"}
+
+### 5. Set vehicle capacity for pickup date
+PUT http://localhost:8080/vehicles/1/capacity
+Authorization: Bearer {{carrierToken}}
+Content-Type: application/json
+
+{"capacityDate":"2026-09-01","totalWeightKg":5000,"totalVolumeM3":20}
+
+### 6. Create a lane (Mumbai â†’ Delhi)
+POST http://localhost:8080/lanes
+Authorization: Bearer {{carrierToken}}
+Content-Type: application/json
+
+{"originCity":"Mumbai","originCountry":"India","originLat":19.0760,"originLon":72.8777,
+ "destinationCity":"Delhi","destinationCountry":"India","destinationLat":28.6139,"destinationLon":77.2090,
+ "distanceKm":1400,"estimatedHours":22}
+
+### 7. Create a rate plan
+POST http://localhost:8080/lanes/1/rate-plans
+Authorization: Bearer {{carrierToken}}
+Content-Type: application/json
+
+{"name":"Standard Rate","pricingModel":"PER_KG","baseRate":2.50}
+
+### 8. Offer contract to shipper
+POST http://localhost:8080/contracts
+Authorization: Bearer {{carrierToken}}
+Content-Type: application/json
+
+{"shipperId":2,"startDate":"2026-01-01"}
+
+### 9. Activate contract
+PUT http://localhost:8080/contracts/1/activate
+Authorization: Bearer {{carrierToken}}
+
+### â”€â”€â”€ SHIPPER FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+### 10. Register shipper
+POST http://localhost:8080/partners
+Content-Type: application/json
+
+{"name":"Acme Electronics","email":"logistics@acme.com","type":"SHIPPER","password":"ship123"}
+
+### 11. Shipper login
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{"email":"logistics@acme.com","password":"ship123"}
+
+@shipperToken = paste_token_here
+
+### 12. Search lanes
+GET http://localhost:8080/lanes/search?origin=Mumbai&destination=Delhi
+
+### 13. Create shipment
+POST http://localhost:8080/shipments
+Authorization: Bearer {{shipperToken}}
+Content-Type: application/json
+
+{"description":"Electronics Batch Q3","weightKg":500,"volumeM3":2,"hazmat":false,"declaredValueUsd":150000}
+
+### 14. Book load (500 kg Ã— â‚¹2.50/kg = â‚¹1,250 total charge)
+POST http://localhost:8080/loads
+Authorization: Bearer {{shipperToken}}
+Content-Type: application/json
+
+{"shipmentId":1,"vehicleId":1,"driverId":1,"ratePlanId":1,"pickupDate":"2026-09-01"}
+
+### â”€â”€â”€ DRIVER FLOW â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+### 15. Driver login
+POST http://localhost:8080/auth/driver-login
+Content-Type: application/json
+
+{"email":"raj@fastfreight.com","password":"dpass"}
+
+@driverToken = paste_token_here
+
+### 16. Driver posts GPS ping (idempotent by device_timestamp)
+POST http://localhost:8080/loads/1/tracking
+Authorization: Bearer {{driverToken}}
+Content-Type: application/json
+
+{"latitude":21.1702,"longitude":72.8311,"speedKmh":75.0,"headingDegrees":0.0,"deviceTimestamp":"2026-09-01T08:00:00Z"}
+
+### 17. Shipper checks live position + ETA
+GET http://localhost:8080/loads/1/tracking/live
+Authorization: Bearer {{shipperToken}}
+
+### 18. Driver checks HOS status
+GET http://localhost:8080/drivers/1/hos-status
+Authorization: Bearer {{carrierToken}}
+
+### â”€â”€â”€ OBSERVABILITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+### 19. Health check
+GET http://localhost:8080/actuator/health
+
+### 20. Prometheus metrics
+GET http://localhost:8080/actuator/prometheus
+
+### 21. Swagger UI (open in browser)
+# http://localhost:8080/swagger-ui.html
+
